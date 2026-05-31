@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Personal Finance Daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a18;
+    --ink-light: #5a5a55;
+    --ink-faint: #9a9a95;
+    --paper: #f8f5ef;
+    --paper-warm: #f2ede3;
+    --paper-card: #fffdf8;
+    --rule: rgba(26,26,24,0.15);
+    --rule-strong: rgba(26,26,24,0.7);
+    --accent: #c8433a;
+    --accent-soft: #f0e8e7;
+    --green: #2d6a4f;
+    --green-soft: #e8f4ee;
+    --amber: #9a6b1a;
+    --amber-soft: #f5edda;
+    --blue: #1a4a7a;
+    --blue-soft: #e8f0f8;
+    --purple: #4a2d7a;
+    --purple-soft: #ede8f5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+  }
+
+  /* Newspaper texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; position: relative; z-index: 1; }
+
+  /* ── Masthead ── */
+  .masthead { padding: 2.5rem 0 0; }
+  .masthead-top { display: flex; justify-content: space-between; align-items: flex-start; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-light); margin-bottom: 0.5rem; font-family: 'DM Mono', monospace; }
+  .masthead-rule { height: 3px; background: var(--ink); margin-bottom: 0.4rem; }
+  .masthead-rule-thin { height: 1px; background: var(--ink); margin-bottom: 1.2rem; }
+  .masthead-title { font-family: 'Playfair Display', serif; font-size: clamp(36px, 7vw, 72px); font-weight: 700; text-align: center; line-height: 1; letter-spacing: -1px; color: var(--ink); }
+  .masthead-sub { text-align: center; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--ink-light); margin: 0.6rem 0 1rem; font-family: 'DM Mono', monospace; }
+  .masthead-bottom { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); font-size: 11px; color: var(--ink-light); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; }
+
+  /* ── Toolbar ── */
+  .toolbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0 0.75rem; flex-wrap: wrap; gap: 10px; }
+  .section-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab { font-size: 11px; padding: 5px 12px; border-radius: 2px; border: 1px solid var(--rule); cursor: pointer; background: transparent; color: var(--ink-light); font-family: 'DM Sans', sans-serif; letter-spacing: 0.3px; transition: all 0.15s; }
+  .tab:hover, .tab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .refresh-btn { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 5px 14px; border-radius: 2px; border: 1px solid var(--ink); cursor: pointer; background: transparent; color: var(--ink); font-family: 'DM Sans', sans-serif; letter-spacing: 0.5px; text-transform: uppercase; transition: all 0.15s; }
+  .refresh-btn:hover { background: var(--ink); color: var(--paper); }
+  .refresh-btn svg { transition: transform 0.3s; }
+  .refresh-btn.loading svg { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .section-rule { height: 1px; background: var(--rule); margin-bottom: 1.5rem; }
+
+  /* ── Ticker ── */
+  .ticker-wrap { overflow-x: auto; scrollbar-width: none; margin-bottom: 1.5rem; }
+  .ticker-wrap::-webkit-scrollbar { display: none; }
+  .ticker-bar { display: flex; gap: 1px; min-width: max-content; background: var(--rule); border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; }
+  .ticker-item { background: var(--paper-card); padding: 10px 16px; min-width: 110px; border-right: 1px solid var(--rule); }
+  .ticker-item:last-child { border-right: none; }
+  .ticker-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint); font-family: 'DM Mono', monospace; margin-bottom: 3px; }
+  .ticker-val { font-size: 15px; font-weight: 500; font-family: 'DM Mono', monospace; color: var(--ink); }
+  .ticker-chg { font-size: 10px; margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .up { color: var(--green); }
+  .down { color: var(--accent); }
+
+  /* ── Section headers ── */
+  .section { margin-bottom: 2.5rem; }
+  .section-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 1rem; }
+  .section-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; color: var(--ink); font-family: 'DM Mono', monospace; padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
+  .section-date { font-size: 10px; color: var(--ink-faint); font-family: 'DM Mono', monospace; margin-left: auto; }
+
+  /* ── Cards ── */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; }
+
+  .card { background: var(--paper-card); padding: 1.25rem; }
+  .card-tag { display: inline-block; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 8px; border-radius: 1px; margin-bottom: 10px; font-family: 'DM Mono', monospace; font-weight: 400; }
+  .tag-red { background: var(--accent-soft); color: var(--accent); }
+  .tag-green { background: var(--green-soft); color: var(--green); }
+  .tag-amber { background: var(--amber-soft); color: var(--amber); }
+  .tag-blue { background: var(--blue-soft); color: var(--blue); }
+  .tag-purple { background: var(--purple-soft); color: var(--purple); }
+  .tag-gray { background: var(--paper-warm); color: var(--ink-light); }
+
+  .card h3 { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 500; line-height: 1.35; margin-bottom: 8px; color: var(--ink); }
+  .card p { font-size: 13px; color: var(--ink-light); line-height: 1.7; }
+  .card .source-line { font-size: 10px; color: var(--ink-faint); margin-top: 10px; font-family: 'DM Mono', monospace; display: flex; align-items: center; gap: 6px; }
+  .card .source-line a { color: var(--ink-light); text-decoration: underline; text-underline-offset: 2px; }
+  .card .source-line a:hover { color: var(--ink); }
+
+  /* ── Front page lead ── */
+  .lead-block { background: var(--ink); color: var(--paper); padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; border-radius: 2px; }
+  .lead-eyebrow { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(248,245,239,0.5); font-family: 'DM Mono', monospace; margin-bottom: 10px; }
+  .lead-block h2 { font-family: 'Playfair Display', serif; font-size: clamp(20px, 3vw, 28px); font-weight: 500; line-height: 1.3; color: var(--paper); }
+
+  /* ── Insight ── */
+  .insight-card { background: var(--paper-warm); border: 1px solid var(--rule); border-radius: 2px; padding: 1.5rem 1.75rem; }
+  .insight-concept { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-faint); font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+  .insight-card h3 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 500; margin-bottom: 10px; }
+  .insight-card p { font-size: 14px; line-height: 1.75; color: var(--ink-light); }
+
+  /* ── Quote ── */
+  .quote-block { border-top: 3px double var(--rule-strong); border-bottom: 3px double var(--rule-strong); padding: 2rem 1rem; margin: 2rem 0; text-align: center; }
+  .quote-text { font-family: 'Playfair Display', serif; font-size: clamp(16px, 2.5vw, 22px); font-style: italic; line-height: 1.5; color: var(--ink); }
+  .quote-attr { font-size: 11px; color: var(--ink-faint); margin-top: 12px; letter-spacing: 1px; font-family: 'DM Mono', monospace; }
+
+  /* ── Loading / Error ── */
+  .loading-state { text-align: center; padding: 5rem 1rem; }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--rule); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+  .loading-state p { font-size: 13px; color: var(--ink-light); font-family: 'DM Mono', monospace; }
+  .error-msg { color: var(--accent); font-size: 13px; font-family: 'DM Mono', monospace; }
+  .error-sub { font-size: 11px; color: var(--ink-faint); margin-top: 6px; font-family: 'DM Mono', monospace; }
+
+  /* ── Footer ── */
+  .footer { border-top: 1px solid var(--rule-strong); padding: 1.5rem 0 0; text-align: center; font-size: 10px; color: var(--ink-faint); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; line-height: 1.8; }
+
+  /* ── API key prompt ── */
+  .api-setup { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 2px; padding: 2rem; margin: 2rem 0; }
+  .api-setup h3 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 10px; }
+  .api-setup p { font-size: 13px; color: var(--ink-light); line-height: 1.7; margin-bottom: 1rem; }
+  .api-setup input { width: 100%; padding: 10px 12px; font-size: 13px; font-family: 'DM Mono', monospace; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); color: var(--ink); outline: none; margin-bottom: 10px; }
+  .api-setup input:focus { border-color: var(--ink); }
+  .api-setup button { padding: 8px 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; letter-spacing: 0.5px; text-transform: uppercase; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); cursor: pointer; border-radius: 2px; }
+  .api-note { font-size: 11px; color: var(--ink-faint); margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div class="masthead-top">
+      <span id="vol-info">Vol. I &nbsp;&#8212;&nbsp; Global Edition</span>
+      <span id="issue-date-top">Loading date...</span>
+      <span>Powered by Claude AI</span>
+    </div>
+    <div class="masthead-rule"></div>
+    <div class="masthead-rule-thin"></div>
+    <div class="masthead-title">The Personal Finance Daily</div>
+    <div class="masthead-sub">Global money. No cap.</div>
+    <div class="masthead-bottom">
+      <span>Markets &bull; Macro &bull; Tech &bull; Crypto &bull; Insight</span>
+      <span id="last-updated">Not yet loaded</span>
+      <span>Not financial advice</span>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="section-tabs">
+      <button class="tab active" onclick="filterSection('all', this)">All</button>
+      <button class="tab" onclick="filterSection('markets', this)">Markets</button>
+      <button class="tab" onclick="filterSection('macro', this)">Macro</button>
+      <button class="tab" onclick="filterSection('tech', this)">Tech & AI</button>
+      <button class="tab" onclick="filterSection('crypto', this)">Crypto</button>
+      <button class="tab" onclick="filterSection('insight', this)">Insight</button>
+    </div>
+    <button class="refresh-btn" id="refresh-btn" onclick="loadNewspaper()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Refresh
+    </button>
+  </div>
+  <div class="section-rule"></div>
+
+  <!-- API Key Setup (shown if no key saved) -->
+  <div class="api-setup" id="api-setup" style="display:none">
+    <h3>One-time setup</h3>
+    <p>To fetch live news, this newspaper needs your Anthropic API key. It's stored only in your browser's local storage and never sent anywhere except directly to Anthropic.</p>
+    <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." />
+    <button onclick="saveApiKey()">Save & Load Newspaper</button>
+    <p class="api-note">Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--ink-light)">console.anthropic.com</a> &mdash; Usage is billed to your account at standard rates.</p>
+  </div>
+
+  <!-- Newspaper content -->
+  <div id="newspaper-content">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Initialising the newsroom...</p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>The Personal Finance Daily &mdash; Generated by Claude AI &mdash; Refreshes on demand</p>
+    <p>Sources: Reuters &bull; Bloomberg &bull; FT &bull; WSJ &bull; CNBC &bull; TechCrunch &bull; CoinDesk &bull; CoinTelegraph</p>
+    <p style="margin-top:6px">This is not financial advice. Do your own research.</p>
+  </footer>
+
+</div>
+
+<script>
+let currentFilter = 'all';
+let paperData = null;
+let apiKey = localStorage.getItem('pfd_api_key') || '';
+
+const today = new Date();
+const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+const shortDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+document.getElementById('issue-date-top').textContent = shortDate;
+
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('sk-ant')) { alert('That doesn\'t look like a valid Anthropic API key.'); return; }
+  apiKey = val;
+  localStorage.setItem('pfd_api_key', apiKey);
+  document.getElementById('api-setup').style.display = 'none';
+  loadNewspaper();
+}
+
+function filterSection(section, el) {
+  currentFilter = section;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (paperData) renderNewspaper(paperData);
+}
+
+async function loadNewspaper() {
+  if (!apiKey) {
+    document.getElementById('api-setup').style.display = 'block';
+    document.getElementById('newspaper-content').innerHTML = '';
+    return;
+  }
+
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('loading');
+  document.getElementById('newspaper-content').innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Fetching today's global briefing...</p></div>`;
+
+  const prompt = `You are the editor of The Personal Finance Daily — a global personal finance newspaper for smart, globally-minded Gen Z readers. Today is ${dateStr}.
+
+Search the web for the most current financial news and data. Return ONLY valid JSON with no markdown fences, no commentary before or after.
+
+{
+  "markets": {
+    "tickers": [
+      {"label": "S&P 500", "value": "5,xxx", "change": "+x.x%", "up": true},
+      {"label": "Nasdaq", "value": "xx,xxx", "change": "+x.x%", "up": true},
+      {"label": "FTSE 100", "value": "x,xxx", "change": "+x.x%", "up": true},
+      {"label": "Nikkei", "value": "xx,xxx", "change": "+x.x%", "up": true},
+      {"label": "BTC", "value": "$xx,xxx", "change": "+x.x%", "up": true},
+      {"label": "ETH", "value": "$x,xxx", "change": "+x.x%", "up": true},
+      {"label": "Gold", "value": "$x,xxx", "change": "+x.x%", "up": true},
+      {"label": "Oil (WTI)", "value": "$xx.xx", "change": "+x.x%", "up": true},
+      {"label": "EUR/USD", "value": "x.xx", "change": "-x.x%", "up": false},
+      {"label": "USD/PKR", "value": "xxx.xx", "change": "+x.x%", "up": false}
+    ],
+    "headline": "One sharp sentence on what global markets are doing today and the dominant reason why.",
+    "source": "Bloomberg / Reuters"
+  },
+  "macro": [
+    {
+      "tag": "Central Banks",
+      "headline": "Specific real headline about Fed, ECB, BOJ, or BOE today",
+      "summary": "2-3 sentences. What happened, what it means for your money, what to watch next. No filler. GenZ tone: direct, no buzzwords.",
+      "source": "Reuters",
+      "url": "https://reuters.com"
+    },
+    {
+      "tag": "Global Trade",
+      "headline": "Specific real headline about tariffs, trade deals, or geopolitical market impact",
+      "summary": "2-3 sentences. Concrete, specific, GenZ-readable.",
+      "source": "Financial Times",
+      "url": "https://ft.com"
+    },
+    {
+      "tag": "Inflation & Cost of Living",
+      "headline": "Specific real headline about CPI, PCE, or cost of living globally",
+      "summary": "2-3 sentences. Make it personal — what does this mean for spending power?",
+      "source": "WSJ",
+      "url": "https://wsj.com"
+    }
+  ],
+  "tech": [
+    {
+      "tag": "AI & Fintech",
+      "headline": "Real headline about AI's impact on finance, fintech funding, or big tech earnings",
+      "summary": "2-3 sentences. Name companies, cite numbers. No vague generalities.",
+      "source": "TechCrunch",
+      "url": "https://techcrunch.com"
+    },
+    {
+      "tag": "Big Tech Money",
+      "headline": "Real headline about a major tech company's financial story this week",
+      "summary": "2-3 sentences. Stock movement, earnings, or strategic pivot with financial implications.",
+      "source": "CNBC",
+      "url": "https://cnbc.com"
+    }
+  ],
+  "crypto": [
+    {
+      "tag": "Bitcoin",
+      "headline": "Real Bitcoin or crypto market headline today",
+      "summary": "2-3 sentences. What's driving the move, what on-chain or macro factor matters. No hype.",
+      "source": "CoinDesk",
+      "url": "https://coindesk.com"
+    },
+    {
+      "tag": "Regulation",
+      "headline": "Real crypto regulation or institutional adoption headline",
+      "summary": "2-3 sentences. Which country, what policy, what it means for markets.",
+      "source": "CoinTelegraph",
+      "url": "https://cointelegraph.com"
+    }
+  ],
+  "insight": {
+    "concept": "Name of the financial concept being discussed (e.g. 'Sequence of returns risk')",
+    "title": "A sharp, memorable title for today's money insight",
+    "body": "4-5 sentences of genuinely useful personal finance insight relevant to a young professional. Tie it to something happening in today's market or macro environment. Tone: smart older sibling who's good with money, not a textbook. Actionable, specific, no filler."
+  },
+  "frontpage_headline": "The single most important financial story of the day in one punchy, confident sentence. No hedging.",
+  "quote": {
+    "text": "A sharp, lesser-known quote about money, markets, ambition, or risk. Avoid overused Buffett quotes. Could be from a trader, philosopher, economist, or writer.",
+    "author": "Full name and relevant context"
+  }
+}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2000,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const textBlock = data.content.find(b => b.type === "text");
+    if (!textBlock) throw new Error("No text response from Claude.");
+
+    let raw = textBlock.text.trim().replace(/```json|```/g, "").trim();
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Could not parse JSON from response.");
+
+    paperData = JSON.parse(jsonMatch[0]);
+    document.getElementById('last-updated').textContent = `Updated ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+    renderNewspaper(paperData);
+
+  } catch (err) {
+    document.getElementById('newspaper-content').innerHTML = `
+      <div class="loading-state">
+        <p class="error-msg">Failed to fetch today's briefing.</p>
+        <p class="error-sub">${err.message}</p>
+        <p class="error-sub" style="margin-top:8px">Check your API key or try refreshing.</p>
+        <button onclick="document.getElementById('api-setup').style.display='block'" style="margin-top:16px;padding:6px 16px;font-size:11px;border:1px solid var(--rule);background:transparent;cursor:pointer;border-radius:2px;font-family:'DM Sans',sans-serif;">Update API Key</button>
+      </div>`;
+  }
+
+  btn.classList.remove('loading');
+}
+
+function renderNewspaper(d) {
+  const f = currentFilter;
+  let html = '';
+
+  // Front page lead
+  if (f === 'all' && d.frontpage_headline) {
+    html += `<div class="lead-block">
+      <div class="lead-eyebrow">Today's lead &mdash; ${dateStr}</div>
+      <h2>${d.frontpage_headline}</h2>
+    </div>`;
+  }
+
+  // Markets
+  if ((f === 'all' || f === 'markets') && d.markets) {
+    html += `<div class="section">
+      <div class="section-header">
+        <span class="section-label">Markets</span>
+        <span class="section-date">${shortDate}</span>
+      </div>
+      <div class="ticker-wrap">
+        <div class="ticker-bar">
+          ${d.markets.tickers.map(t => `
+            <div class="ticker-item">
+              <div class="ticker-label">${t.label}</div>
+              <div class="ticker-val">${t.value}</div>
+              <div class="ticker-chg ${t.up ? 'up' : 'down'}">${t.change}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card" style="grid-column: 1 / -1;">
+          <span class="card-tag tag-gray">Market summary</span>
+          <h3>${d.markets.headline}</h3>
+          <div class="source-line">${d.markets.source}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Macro
+  if ((f === 'all' || f === 'macro') && d.macro) {
+    html += `<div class="section">
+      <div class="section-header">
+        <span class="section-label">Macro & Global</span>
+      </div>
+      <div class="grid-2">
+        ${d.macro.map((item, i) => `
+          <div class="card">
+            <span class="card-tag tag-blue">${item.tag}</span>
+            <h3>${item.headline}</h3>
+            <p>${item.summary}</p>
+            <div class="source-line">${item.source} &mdash; <a href="${item.url}" target="_blank">Read &rarr;</a></div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Tech
+  if ((f === 'all' || f === 'tech') && d.tech) {
+    html += `<div class="section">
+      <div class="section-header">
+        <span class="section-label">Tech & AI</span>
+      </div>
+      <div class="grid-2">
+        ${d.tech.map(item => `
+          <div class="card">
+            <span class="card-tag tag-purple">${item.tag}</span>
+            <h3>${item.headline}</h3>
+            <p>${item.summary}</p>
+            <div class="source-line">${item.source} &mdash; <a href="${item.url}" target="_blank">Read &rarr;</a></div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Crypto
+  if ((f === 'all' || f === 'crypto') && d.crypto) {
+    html += `<div class="section">
+      <div class="section-header">
+        <span class="section-label">Crypto</span>
+      </div>
+      <div class="grid-2">
+        ${d.crypto.map(item => `
+          <div class="card">
+            <span class="card-tag tag-amber">${item.tag}</span>
+            <h3>${item.headline}</h3>
+            <p>${item.summary}</p>
+            <div class="source-line">${item.source} &mdash; <a href="${item.url}" target="_blank">Read &rarr;</a></div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Insight
+  if ((f === 'all' || f === 'insight') && d.insight) {
+    html += `<div class="section">
+      <div class="section-header">
+        <span class="section-label">Today's Insight</span>
+      </div>
+      <div class="insight-card">
+        <div class="insight-concept">${d.insight.concept}</div>
+        <h3>${d.insight.title}</h3>
+        <p>${d.insight.body}</p>
+      </div>
+    </div>`;
+  }
+
+  // Closing quote
+  if (f === 'all' && d.quote) {
+    html += `<div class="quote-block">
+      <div class="quote-text">"${d.quote.text}"</div>
+      <div class="quote-attr">&mdash; ${d.quote.author}</div>
+    </div>`;
+  }
+
+  if (!html) {
+    html = `<div class="loading-state"><p>No content for this section.</p></div>`;
+  }
+
+  document.getElementById('newspaper-content').innerHTML = html;
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', () => {
+  if (apiKey) {
+    loadNewspaper();
+  } else {
+    document.getElementById('api-setup').style.display = 'block';
+    document.getElementById('newspaper-content').innerHTML = '';
+  }
+});
+</script>
+</body>
+</html>
